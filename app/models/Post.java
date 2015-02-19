@@ -10,8 +10,12 @@ public class Post extends Model {
 
     public static Model.Finder<String,Post> FINDER = new Model.Finder<String, Post>(String.class, Post.class);
 
+    @Id
     public String title;
     public Date postedAt;
+
+    @OneToMany(mappedBy="post", cascade=CascadeType.ALL)
+    public List<Comment> comments;
 
     @Lob
     @Basic(fetch = FetchType.EAGER)
@@ -25,6 +29,7 @@ public class Post extends Model {
         this.title = title;
         this.content = content;
         this.postedAt = new Date();
+        this.comments = new ArrayList<>();
     }
 
     public void setContent(String content) {
@@ -34,5 +39,15 @@ public class Post extends Model {
     public String getContent() {
         return content;
     }
+
+    public Post addComment(String author, String content) {
+        Comment newComment = new Comment(this, author, content);
+        newComment.save();
+        this.comments.add(newComment);
+        this.save();
+        return this;
+    }
+
+
 
 }

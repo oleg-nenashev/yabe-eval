@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import models.Comment;
 import models.Post;
 import models.User;
 import org.junit.*;
@@ -76,6 +77,75 @@ public class ApplicationTest extends YABETestBase {
         assertEquals("My first post", firstPost.title);
         assertEquals("Hello world", firstPost.getContent());
         assertNotNull(firstPost.postedAt);
+    }
+
+    @Test
+    public void postComments() {
+        // Create a new user and save it
+        User bob = new User("bob@gmail.com", "secret", "Bob");
+        bob.save();
+
+        // Create a new post
+        Post bobPost = new Post(bob, "My first post", "Hello world");
+        bobPost.save();
+
+        // Post a first comment
+        new Comment(bobPost, "Jeff", "Nice post").save();
+        new Comment(bobPost, "Tom", "I knew that !").save();
+
+        // Retrieve all comments
+        List<Comment> bobPostComments = Comment.FINDER.where().eq("post", bobPost).findList();
+
+        // Tests
+        assertEquals(2, bobPostComments.size());
+
+        Comment firstComment = bobPostComments.get(0);
+        assertNotNull(firstComment);
+        assertEquals("Jeff", firstComment.author);
+        assertEquals("Nice post", firstComment.content);
+        assertNotNull(firstComment.postedAt);
+
+        Comment secondComment = bobPostComments.get(1);
+        assertNotNull(secondComment);
+        assertEquals("Tom", secondComment.author);
+        assertEquals("I knew that !", secondComment.content);
+        assertNotNull(secondComment.postedAt);
+    }
+
+    @Test
+    public void useTheCommentsRelation() {
+        // Create a new user and save it
+        User bob = new User("bob@gmail.com", "secret", "Bob");
+        bob.save();
+
+        // Create a new post
+        Post bobPost = new Post(bob, "My first post", "Hello world");
+        bobPost.save();
+
+        // Post a first comment
+        bobPost.addComment("Jeff", "Nice post");
+        bobPost.addComment("Tom", "I knew that !");
+
+        // Count things
+        assertEquals(1, User.FINDER.findRowCount());
+        assertEquals(1, Post.FINDER.findRowCount());
+        assertEquals(2, Comment.FINDER.findRowCount());
+
+        // Retrieve Bob's post
+        bobPost = Post.FINDER.where().eq("author", bob).findUnique();
+        assertNotNull(bobPost);
+
+        // Navigate to comments
+        assertEquals(2, bobPost.comments.size());
+        assertEquals("Jeff", bobPost.comments.get(0).author);
+
+        // Delete the post
+        bobPost.delete();
+
+        // Check that all comments have been deleted
+        assertEquals(1, User.FINDER.findRowCount());
+        assertEquals(0, Post.FINDER.findRowCount());
+        assertEquals(0, Comment.FINDER.findRowCount());
     }
 
     @Test
