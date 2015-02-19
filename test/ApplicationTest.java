@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import models.User;
 import org.junit.*;
-
 import play.mvc.*;
 import play.test.*;
 import play.data.DynamicForm;
@@ -17,7 +17,8 @@ import play.libs.F.*;
 
 import static play.test.Helpers.*;
 import static org.fest.assertions.Assertions.*;
-
+import static org.junit.Assert.*;
+import play.db.ebean.Model;
 
 /**
 *
@@ -27,10 +28,20 @@ import static org.fest.assertions.Assertions.*;
 */
 public class ApplicationTest {
 
+    public static Model.Finder<String,User> find =
+            new Model.Finder<String, User>(String.class, User.class);
+
     @Test
-    public void simpleCheck() {
-        int a = 1 + 1;
-        assertThat(a).isEqualTo(2);
+    public void createAndRetrieveUser() {
+        // Create a new user and save it
+        new User("bob@gmail.com", "secret", "Bob").save();
+
+        // Retrieve the user with e-mail address bob@gmail.com
+        User bob = find.fetch("email", "bob@gmail.com").findUnique();
+
+        // Test
+        assertNotNull(bob);
+        assertEquals("Bob", bob.fullname);
     }
 
     @Test
