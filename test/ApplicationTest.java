@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import models.Post;
 import models.User;
 import org.junit.*;
 import play.mvc.*;
@@ -50,6 +51,31 @@ public class ApplicationTest extends YABETestBase {
         assertNotNull(User.connect("bob@gmail.com", "secret"));
         assertNull(User.connect("bob@gmail.com", "badpassword"));
         assertNull(User.connect("tom@gmail.com", "secret"));
+    }
+
+    @Test
+    public void createPost() {
+        // Create a new user and save it
+        User bob = new User("bob@gmail.com", "secret", "Bob");
+        bob.save();
+
+        // Create a new post
+        new Post(bob, "My first post", "Hello world").save();
+
+        // Test that the post has been created
+        assertEquals(1, Post.FINDER.findRowCount());
+
+        // Retrieve all posts created by Bob
+        List<Post> bobPosts = Post.FINDER.where().eq("author", bob).findList();
+
+        // Tests
+        assertEquals(1, bobPosts.size());
+        Post firstPost = bobPosts.get(0);
+        assertNotNull(firstPost);
+        assertEquals(bob, firstPost.author);
+        assertEquals("My first post", firstPost.title);
+        assertEquals("Hello world", firstPost.getContent());
+        assertNotNull(firstPost.postedAt);
     }
 
     @Test
